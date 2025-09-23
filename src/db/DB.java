@@ -1,6 +1,6 @@
 package db;
 
-import com.sun.jdi.connect.spi.Connection;
+import java.sql.Connection;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -31,7 +31,7 @@ public class DB {
         if (conn != null) {
             try {
                 conn.close();
-            }catch (IOException e) {
+            }catch (SQLException e) {
                 throw new DbException(e.getMessage());
             }
         }
