@@ -103,9 +103,32 @@ public class SellerDaoJDBC implements SellerDao {
         }
     }
 
+    /**
+     * Excluí linhas da tabela do banco de dados
+     *
+     * @param id para atualizar a condição
+     * @throws  DbException testa se o id é válido
+     */
     @Override
     public void deleteById(Integer id) {
+        PreparedStatement st = null;
+        try {
+            // Comando SQl de Exclusão
+            st = conn.prepareStatement("DELETE FROM seller " + "WHERE Id = ?");
 
+            st.setInt(1, id); // Atualiza a condição
+            int rows = st.executeUpdate(); // Executa a deleção
+
+            // Testa se o id é válido
+            if (rows == 0) {
+                throw new DbException("Id not found");
+            }
+        } catch (SQLException e) {
+            throw new DbException(e.getMessage());
+        }
+        finally {
+            DB.closeStatement(st);
+        }
     }
 
     /**
