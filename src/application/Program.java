@@ -34,7 +34,7 @@ public class Program {
             System.out.println(obj);
         }
 
-        System.out.println("\n=== TEST 4: seller findByAll ===");
+        System.out.println("\n=== TEST 4: seller insert ===");
         Seller newSeller = new Seller(null, "marcos", "marquitos@gmail.com", new Date(), 3200.00, department);
         sellerDao.insert(newSeller);
         System.out.println("Inserted! New Id = " + newSeller.getId());
