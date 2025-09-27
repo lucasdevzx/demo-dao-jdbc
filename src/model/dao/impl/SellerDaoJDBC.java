@@ -39,7 +39,7 @@ public class SellerDaoJDBC implements SellerDao {
     }
 
     /**
-     * Retorna tabela por id
+     * Consulta a tabela seller por Id
      *
      * @param id fornecido pelo main e utilizado na consulta SQL
      * @return obj retorna o resultado da consulta
@@ -110,18 +110,57 @@ public class SellerDaoJDBC implements SellerDao {
         return obj;
     }
 
+    /**
+     * Consulta a tabela seller
+     *
+     * @return list com os dados
+     */
     @Override
     public List<Seller> findAll() {
-        return List.of();
+        PreparedStatement st = null;
+        ResultSet rs = null;
+        try {
+            // Comando SQL de Consulta
+            st = conn.prepareStatement(
+                    "SELECT seller.*,department.Name as DepName "
+                            + "FROM seller INNER JOIN department "
+                            + "ON seller.DepartmentId = department.Id "
+                            + "ORDER BY Name");
+            rs = st.executeQuery(); // Executa o comando e retorna o resultado em formato de tabela
+
+            List<Seller> list = new ArrayList<>();
+            Map<Integer, Department> map = new HashMap<>(); // Armazenará instâncias
+
+            // Percorre a tabela enquanto existir uma próxima coluna
+            while (rs.next()) {
+                Department dep = map.get(rs.getInt("DepartmentId")); // Verifica se um DepartmentId existe dentro do Map, se não, retorna nulo
+
+                if (dep == null) {
+                    dep = instantiateDepartment(rs); // Envia o resultset como parâmetro e recebe o Department atualizado pelo method
+                    map.put(rs.getInt("DepartmentId"), dep); // Armazena a chave do deparmentId da coluna atual e o Department relacionado
+                }
+
+                Seller obj = instantiateSeller(rs, dep); // Envia o result set e o department(composição) como parâmetro e recebe o obj atualizado pelo method
+                list.add(obj); // Armazena todas as colunas em uma lista
+            }
+            return list; // Retorna a lista com os dados
+        } catch (SQLException e) {
+            throw new DbException(e.getMessage());
+        }
+        finally {
+            DB.closeStatement(st);
+            DB.closeResultSet(rs);
+        }
     }
 
     /**
+     * Consulta a tabela seller por DepartmentId
      *
      * @param department para conseguir o id da Classe
      * @return list com todos os dados requeridos
      */
     @Override
-    public List<Seller> findBydepartment(Department department) {
+    public List<Seller> findByDepartment(Department department) {
         PreparedStatement st = null;
         ResultSet rs = null;
         try {
@@ -138,12 +177,13 @@ public class SellerDaoJDBC implements SellerDao {
             List<Seller> list = new ArrayList<>();
             Map<Integer, Department> map = new HashMap<>(); // Armazenará instâncias
 
-            while (rs.next()) { // Percorre a tabela enquanto existir uma próxima coluna
+            // Percorre a tabela enquanto existir uma próxima coluna
+            while (rs.next()) {
                 Department dep = map.get(rs.getInt("DepartmentId")); // Verifica se um DepartmentId existe dentro do Map, se não, retorna nulo
 
                 if (dep == null) {
                     dep = instantiateDepartment(rs); // Envia o resultset como parâmetro e recebe o Department atualizado pelo method
-                    map.put(rs.getInt("DepartmentId"), dep); // Armazena a chave do Deparment coluna atual e o Department relacionado
+                    map.put(rs.getInt("DepartmentId"), dep); // Armazena a chave do deparmentId da coluna atual e o Department relacionado
                 }
 
                 Seller obj = instantiateSeller(rs, dep); // Envia o result set e o department(composição) como parâmetro e recebe o obj atualizado pelo method
