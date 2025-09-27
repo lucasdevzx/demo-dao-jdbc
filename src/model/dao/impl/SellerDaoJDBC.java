@@ -1,15 +1,13 @@
 package model.dao.impl;
 
+import com.mysql.cj.protocol.Resultset;
 import db.DB;
 import db.DbException;
 import model.dao.SellerDao;
 import model.entities.Department;
 import model.entities.Seller;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,8 +21,52 @@ public class SellerDaoJDBC implements SellerDao {
         this.conn = conn;
     }
 
+    /**
+     * Insere objetos em tabelas do banco de dados
+     *
+     * @param obj para acessar os objetos
+     * @throws DbException para retornar erro personalizado
+     */
     @Override
     public void insert(Seller obj) {
+        PreparedStatement st = null;
+
+        try {
+            st = conn.prepareStatement(
+                    // Comando SQL de Inserção
+                    "INSERT INTO seller "
+                    + "(Name, Email, BirthDate, BaseSalary, DepartmentId) "
+                    + "VALUES "
+                    +"(?, ?, ?, ?, ?)",
+                    Statement.RETURN_GENERATED_KEYS); // Prepara o Statement para retornar o Id da coluna criada
+
+            // Inserem os objetos da Classe nas colunas do Banco de Dados
+            st.setString(1, obj.getName());
+            st.setString(2, obj.getEmail());
+            st.setDate(3, new java.sql.Date(obj.getBirthDate().getTime()));
+            st.setDouble(4, obj.getBaseSalary());
+            st.setInt(5, obj.getDepartment().getId());
+
+            int rollsAffected = st.executeUpdate(); // Executa a inserção e retorna a quantidade de linhas afetadas
+
+            if (rollsAffected > 0) {
+                ResultSet rs = st.getGeneratedKeys(); // Cria uma tabela especial que contém os Id's criados na inserção
+                // Navega e verifica se existe uma próxima coluna diferente de zero
+                if (rs.next()) {
+                    int id = rs.getInt(1); // Armazena o id encontrado na primeira coluna
+                    obj.setId(id); // Atualiza o objeto com o mesmo id da coluna do banco de dados
+                }
+                DB.closeResultSet(rs);
+            }
+            else {
+                throw new DbException("Unexpected error! No rows affected");
+            }
+        } catch (SQLException e) {
+            throw new DbException(e.getMessage());
+        }
+        finally {
+            DB.closeStatement(st);
+        }
 
     }
 
